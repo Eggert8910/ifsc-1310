@@ -1,15 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta charset="utf-8">
-        <title>Prototype Assignment</title>
-        <meta name="author" content="Anthony Eggert">
-        <meta name="description" content="A sample page utilizing various HTML fundamentals.">
+        <meta charset="utf-8"> <!-- Specifies the character set to use for the page -->
+        <title>Prototype Assignment</title> <!-- Page title -->
+        <meta name="author" content="Anthony Eggert"> <!-- Page author -->
+        <meta name="description" content="A sample page utilizing various HTML fundamentals."> <!-- Search engine popup description -->
     </head>
     <body>
+        <div class="container">
         <header>
             <h1>Battle Cards Server API Documentation</h1>
         </header>
+        <nav>
+            <ul>
+                <li><a href="../index.html" title="Return to the Home Page">Home</a></li>
+                <li></li>
+                <li><a href="https://ualr.edu" target="_blank" title="UALR Home Page">UALR</a></li>
+                <li></li>
+            </ul>
+        </nav>
         <main>
             <h2>What is the Battle Cards Server?</h2>
             <p>Battle Cards is a card game originally created by Rose Strohm that is currently being made into an online game by Anthony Eggert. This documentation briefly covers some of the most significant parts of the server code.</p>
@@ -35,12 +44,13 @@
             <h4 id="workers">Service Workers</h4>
             <p>Service Workers are objects used to perform specific tasks for the server. Some workers may be contracted, meaning they alert other parts of the server when something happens.</p>
             <table>
+                <caption>Information about all service workers on the back end</caption>
                 <tr>
-                    <th>Worker</th>
-                    <th>Purpose</th>
-                    <th>Lifespan</th>
-                    <th>Controller</th>
-                    <th>Is Contracted</th>
+                    <th scope="col">Worker</th>
+                    <th scope="col">Purpose</th>
+                    <th scope="col">Lifespan</th>
+                    <th scope="col">Controller</th>
+                    <th scope="col">Is Contracted</th>
                 </tr>
                 <tr>
                     <td>WorkerManager*</td>
@@ -83,6 +93,138 @@
             <p>The Configuration file is a critical file that affects how the server behaves. Only the web server administrator, the person in charge of the server, can modify it, and the server will not start if the file is missing or can't be deserialized.</p>
             <h3 id="controller">The Controller</h3>
             <p>The controller (full name ClientController) tracks active games and talks to client applications. It does not do any calculations itself, but sends an "image" of the game to players on request and creates or deletes games when instructed. To ensure that only client applications are making these requests, the controller requires an array of 40 bytes hardcoded in hexadecimal into both source codes to be sent with the request. If the data does not match perfectly, the request is rejected.</p>
+            <h2 id="operators">The Operators</h2>
+            <h3 id="DB">DatabaseOperator</h3>
+            <p>DatabaseOperator is used to manage the <em>User Database</em> connection context (called UserDbContext in the source code). With the exception of the initializer (which takes the service provider for the server as input), all methods in the DatabaseOperator take the UserDbContext as input with the information needed to perform the action.</p>
+            <h4 id="db-model">Database Model</h4>
+            <p>The User Database is made up of 6 tables. Each table has a Model declared on the server and stored as a set of each model in the context object. The tables are as follows:</p>
+            <table>
+                <caption>Information about all tables on the User Database</caption>
+                <tr>
+                    <th scope="col">Table name</th>
+                    <th scope="col">Purpose</th>
+                    <th scope="col">Connections (foreign keys)</th>
+                    <th scope="col">DatabaseOperator-provided functions</th>
+                </tr>
+                <tr>
+                    <td>Userdata</td>
+                    <td>Record user information, such as username, encrypted password, and player ID</td>
+                    <td>Id (outbound)</td>
+                    <td>INSERT, UPDATE, SELECT</td>
+                </tr>
+                <tr>
+                    <td>UserGuids</td>
+                    <td>Record session IDs</td>
+                    <td>DBID (from Userdata - Id)</td>
+                    <td>INSERT, UPDATE, SELECT, DELETE</td>
+                </tr>
+                <tr>
+                    <td>LicenseRegist</td>
+                    <td>Record client application IDs and their owners</td>
+                    <td>LicenseHolderId (from Userdata - Id)</td>
+                    <td>INSERT, SELECT, DELETE</td>
+                </tr>
+                <tr>
+                    <td>MessageBoard</td>
+                    <td>Record messages posted to the message board</td>
+                    <td>None</td>
+                    <td>INSERT, SELECT</td>
+                </tr>
+                <tr>
+                    <td>LevelModel</td>
+                    <td>Record player level perks</td>
+                    <td>None</td>
+                    <td>SELECT</td>
+                </tr>
+                <tr>
+                    <td>IPBlacklist</td>
+                    <td>Record blacklisted IP addresses</td>
+                    <td>None</td>
+                    <td>SELECT</td>
+                </tr>
+            </table>
+            <p>The DatabaseOperator-provided functions are all SQL functions that have equivalents in the DatabaseOperator. INSERT means the server can add to the table, UPDATE means it can change records, SELECT means it can read from the table, and DELETE means it can delete records. Tables with only SELECT can only be modified by connecting to the SQL database directly.</p>
+            <h4 id="process">Database Request Processing</h4>
+            <p>Whenever a request is needed, the server follows different sets of instructions depending on the request. Here are the main request processing procedures.</p>
+            <ul>
+                <li>
+                    Create New User
+                    <ol>
+                        <li>Get new user information from /Signup</li>
+                        <li>Call DatabaseOperator.AttemptSignup with information. Inside the method:</li>
+                        <li>Check if password is sufficient; if not, stop</li>
+                        <li>Check existing users for username match, recording player IDs in the process for step 6</li>
+                        <li>If username exists, stop</li>
+                        <li>Generate a new player ID and see if it exists; do this until a unique player ID is generated</li>
+                        <li>Create a new Userdata model with all information, encrypting password with Caesar cipher + SHA256; append this to the end of the Userdata table</li>
+                        <li>Save changes to the User Database; Generate a new session ID (see session ID procedure) and assign it to the output parameter</li>
+                        <li>Close with a success status</li>
+                        <li>If failed, inform the user of the error; otherwise, redirect to /Home</li>
+                    </ol>
+                </li>
+                <li>
+                    Log In User
+                    <ol>
+                        <li>Get login information from /login</li>
+                        <li>Call DatabaseOperator.AttemptLogin with information. Inside the method:</li>
+                        <li>Encrypt password with Caesar cipher + SHA256</li>
+                        <li>Search Userdata table for username; if found and password matches, close with a success status, otherwise close with an invalid password</li>
+                        <li>If username is not found, close with username not found</li>
+                        <li>If login is successful, generate a new session ID and add it to the response cookies and redirect to /Home, otherwise inform the user of the error</li>
+                    </ol>
+                </li>
+                <li>
+                    Authenticate User
+                    <ol>
+                        <li>Get session ID (IP authentication is supported, but is flagged as obsolete due to unreliability)</li>
+                        <li>Call respective method for authentication (ResolveUserFromGuid is the go-to method, GetUser is used for IP). In the method:</li>
+                        <li>Find the identifier in the respective table (UserGuids for session ID, Userdata for IP)</li>
+                        <li>If not found, throw an error; if found and searching by IP, return the open Userdata</li>
+                        <li>If found by session, store the player ID and stop searching; search Userdata table for player ID</li>
+                        <li>If found, return the Userdata, otherwise throw an error</li>
+                        <li>Handle success accordingly</li>
+                    </ol>
+                </li>
+                <li>
+                    Add Session ID
+                    <ol>
+                        <li>Get the player ID and call DatabaseOperator.IssueGuid. In the method:</li>
+                        <li>Search Userdata table for player ID; if not found, return an empty UserGuids model</li>
+                        <li>If found, check if a session already exists</li>
+                        <li>If a session exists, reset issue and expiration dates, then update entry</li>
+                        <li>otherwise, generate a new Guid (since these are full Microsoft Guids, duplicate checking is not necessary) and create the model, then add new entry</li>
+                        <li>Save the database and return the new session ID</li>
+                    </ol>
+                </li>
+                <li>
+                    Add (misc)
+                    <ol>
+                        <li>Get information and call method. In the method:</li>
+                        <li>Check for matches if necessary; if match exists, stop</li>
+                        <li>Add new information and save the database</li>
+                    </ol>
+                </li>
+                <li>
+                    Find (misc)
+                    <ol>
+                        <li>Get information to search for and call respective method. In the method:</li>
+                        <li>Search for matches</li>
+                        <li>If searching for all matches, return all matches that are found, otherwise return the first match</li>
+                        <li>If no matches are found, return an empty object</li>
+                    </ol>
+                    (for deleting, do the same thing as find but delete the entry)
+                </li>
+            </ul>
+            <h3 id="logger">Logger</h3>
+            <p>The Logger is in charge of log files and archiving audits when "auditsarchiving" is turned on in server.config. The Logger is responsible for three files: events.log, engine.log, and dbcontext.log. events.log is the primary log file for the server and the only one of these files that can be read in an organized format from the Administration Console. engine.log is used by the controller for messages regarding online play. dbcontext.log is generated by the database connection and cannot be read from the front end.</p>
+            <p>events.log and engine.log follow a common format for application log files, starting with a datestamp (in UTC), then the type of log (error, warning, or message). For errors or warnings, the type is followed by the origin of the log: which file and which line (i.e. Program.cs:253, which would be an error attempting to read and deserialize server.config). Following this is the message itself. This is a sample of a message in events.log: <q>[2/22/2022 6:03:09 PM] Message Server started</q>. For an example of an error, this one was created during my failed attempt to link a SQL function to a method in the database context:</p>
+            <blockquote>
+                [2/1/2022 9:33:08 PM] Error Program.cs:26 The DbFunction 'ClearOutdatedRecords' has an invalid return type 'void'. Ensure that the return type can be mapped by the current provider.
+            </blockquote>
+            <p>Note: the line number on this error is horribly inaccurate because I have not gotten around to updating the line numbers on the errors yet. The line number should have been 317</p>
+            <h3 id="taskmanager">TaskManager</h3>
+            <p>TaskManager handles miscellaneous tasks to run on the server. The TaskManager consists of an object called a TaskWorkerScheduler, which is used to run tasks concurrently up to the Max Degrees of Parallelism, at which point it waits for another task to finish. The MDOP is set by the configuration file and defaults to 10 concurrent workers.</p>
+            <p>TaskManager also provides memory reports from Garbage Collect to the Administration Console, as well as the current task pool size and the MDOP.</p>
             <h2 id="cmd">CMD Commands</h2>
             <p>The following section lists the CMD functions and what they do.</p>
             <dl>
@@ -109,6 +251,11 @@
                 <dt>whoami</dt>
                 <dd>Outputs the active administrator.</dd>
             </dl>
+            <small>*requires web server administrator priviledges</small>
         </main>
+        <footer>
+            <h6>&copy; 2022 - Anthony Eggert - <a href="mailto:aeggert@ualr.edu">Email Me</a> - <a href="#top">Back to Top</a></h6>
+        </footer>
+        </div> <!-- container -->
     </body>
 </html>
