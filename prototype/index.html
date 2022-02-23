@@ -2,11 +2,113 @@
 <html lang="en">
     <head>
         <meta charset="utf-8">
-        <title></title>
+        <title>Prototype Assignment</title>
         <meta name="author" content="Anthony Eggert">
-        <meta name="description" content="">
+        <meta name="description" content="A sample page utilizing various HTML fundamentals.">
     </head>
     <body>
-        
+        <header>
+            <h1>Battle Cards Server API Documentation</h1>
+        </header>
+        <main>
+            <h2>What is the Battle Cards Server?</h2>
+            <p>Battle Cards is a card game originally created by Rose Strohm that is currently being made into an online game by Anthony Eggert. This documentation briefly covers some of the most significant parts of the server code.</p>
+            <h2 id="parts">Major Parts</h2>
+            <p>There are three major parts of the server: the <strong>front end</strong>, the <strong>back end</strong>, and the <strong>controller</strong>. The front end is a collection of Razer pages that make up what the users see when they visit the website. The back end is a blend of operators and service workers that ensure the server operates well. The controller behaves similarly to a WebSocket, except it still uses HTTP to communicate. It has no presentational aspect to speak of, though it does exist in URL form. It is used by the client application and certain administrator utilities to interact with both the server and other players.</p>
+            <h3 id="front-end">The Front End</h3>
+            <p>The front end itself is composed of two parts: the main site and the Administration Console. The Administration Console is used by the administrators to interact with the back end, and requires a very long security key and being logged in as the key's owner to access. No part of the main site mentions or links to the console. In the console is a page called <a href="#cmd">CMD</a>, where administrators can send instructions to the server. Certain administrators can also get an audit, which is an XML document containing information about the current status of the server.</p>
+            <p>The main site serves a number of purposes, including:</p>
+            <ul>
+                <li>Creating or logging in to an account</li>
+                <li>Learning about the game</li>
+                <li>Asking questions about the game or the client application</li>
+                <li>Registering a new client application to an account</li>
+            </ul>
+            <p>A player must have an active session to play online.</p>
+            <h3 id="back-end">The Back End</h3>
+            <p>The back end is made up of operators and workers. Operators are static classes, which means the server cannot have multiple instances of them, and serve one general purpose (excluding TaskManager). These operators are:</p>
+            <ul>
+                <li>DatabaseOperator: controls all queries and changes to the database.</li>
+                <li>Logger: logs messages and errors from all parts of the server, reads and clears the logs from the main log file, and archives audits when configured to do so.</li>
+                <li>TaskManager: tracks all active tasks (asynchronous code execution) and provides memory reports to the Console home page.</li>
+            </ul>
+            <h4 id="workers">Service Workers</h4>
+            <p>Service Workers are objects used to perform specific tasks for the server. Some workers may be contracted, meaning they alert other parts of the server when something happens.</p>
+            <table>
+                <tr>
+                    <th>Worker</th>
+                    <th>Purpose</th>
+                    <th>Lifespan</th>
+                    <th>Controller</th>
+                    <th>Is Contracted</th>
+                </tr>
+                <tr>
+                    <td>WorkerManager*</td>
+                    <td>Tracks how many workers have been created and assigns IDs to new ones</td>
+                    <td>Server uptime (ends at shutdown)</td>
+                    <td>Program class (container for entry point)</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td>Contract*</td>
+                    <td>Used by contracted workers to alert contracter when something happens</td>
+                    <td>Varies</td>
+                    <td>Contracted worker</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td>SecurityWorker</td>
+                    <td>Check whether an administrator is authorized to do the requested action</td>
+                    <td>Very short</td>
+                    <td>Front End</td>
+                    <td>No</td>
+                </tr>
+                <tr>
+                    <td>TaskWorker</td>
+                    <td>Perform an action without blocking other code</td>
+                    <td>Varies</td>
+                    <td>TaskManager</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Watchdog</td>
+                    <td>Checks to see if the specified condition is met, and performs the specified action if it is</td>
+                    <td>Very long unless killed (stopped) or one-off</td>
+                    <td>Program class</td>
+                    <td>Yes</td>
+                </tr>
+            </table>
+            <small>*Technically not workers but observers, but worth mentioning here</small>
+            <h4 id="config">The Configuration File</h4>
+            <p>The Configuration file is a critical file that affects how the server behaves. Only the web server administrator, the person in charge of the server, can modify it, and the server will not start if the file is missing or can't be deserialized.</p>
+            <h3 id="controller">The Controller</h3>
+            <p>The controller (full name ClientController) tracks active games and talks to client applications. It does not do any calculations itself, but sends an "image" of the game to players on request and creates or deletes games when instructed. To ensure that only client applications are making these requests, the controller requires an array of 40 bytes hardcoded in hexadecimal into both source codes to be sent with the request. If the data does not match perfectly, the request is rejected.</p>
+            <h2 id="cmd">CMD Commands</h2>
+            <p>The following section lists the CMD functions and what they do.</p>
+            <dl>
+                <dt>archive</dt>
+                <dd>Archives files for review later. Archived files are named based on when they were archived, and ".arc" is appended after the original file extension.</dd>
+                <dt>cat</dt>
+                <dd>Based on the command of the same name from Bash, cat outputs the contents of a file to the page. Note that cat will not output files that are predicted to be large or not easily read such as the log file for the database connection.</dd>
+                <dt>config</dt>
+                <dd>Outputs the configuration settings in use, or outputs the requested setting.</dd>
+                <dt>decode*</dt>
+                <dd>Translates a binary file generated by dumpsubsystem.</dd>
+                <dt>dumpsubsystem*</dt>
+                <dd>Generates a binary file from the specified subsystem.</dd>
+                <dt>exec*</dt>
+                <dd>Runs a server script or queues it to run if one is already active.</dd>
+                <dt>help</dt>
+                <dd>Provides information on commands with usage specification that needed its own syntax explanation (found by running "help help").</dd>
+                <dt>nodes*</dt>
+                <dd>Disables or enables parts of the server.</dd>
+                <dt>shutdown*</dt>
+                <dd>Stops the server with a clean exit, allowing all systems to clean up before stopping.</dd>
+                <dt>watch</dt>
+                <dd>Starts a watchdog from a predefined configuration or terminates a terminable one.</dd>
+                <dt>whoami</dt>
+                <dd>Outputs the active administrator.</dd>
+            </dl>
+        </main>
     </body>
 </html>
