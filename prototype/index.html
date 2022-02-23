@@ -14,9 +14,9 @@
         <nav>
             <ul>
                 <li><a href="../index.html" title="Return to the Home Page">Home</a></li>
-                <li></li>
+                <li><a href="about.html" title="About ">About</a></li>
                 <li><a href="https://ualr.edu" target="_blank" title="UALR Home Page">UALR</a></li>
-                <li></li>
+                <li><a href="mailto:aeggert@ualr.edu">Contact</a></li>
             </ul>
         </nav>
         <main>
@@ -24,6 +24,7 @@
             <p>Battle Cards is a card game originally created by Rose Strohm that is currently being made into an online game by Anthony Eggert. This documentation briefly covers some of the most significant parts of the server code.</p>
             <h2 id="parts">Major Parts</h2>
             <p>There are three major parts of the server: the <strong>front end</strong>, the <strong>back end</strong>, and the <strong>controller</strong>. The front end is a collection of Razer pages that make up what the users see when they visit the website. The back end is a blend of operators and service workers that ensure the server operates well. The controller behaves similarly to a WebSocket, except it still uses HTTP to communicate. It has no presentational aspect to speak of, though it does exist in URL form. It is used by the client application and certain administrator utilities to interact with both the server and other players.</p>
+            <img src="assets/img/fancy_diagram.png" alt="A diagram of the server" width="600" />
             <h3 id="front-end">The Front End</h3>
             <p>The front end itself is composed of two parts: the main site and the Administration Console. The Administration Console is used by the administrators to interact with the back end, and requires a very long security key and being logged in as the key's owner to access. No part of the main site mentions or links to the console. In the console is a page called <a href="#cmd">CMD</a>, where administrators can send instructions to the server. Certain administrators can also get an audit, which is an XML document containing information about the current status of the server.</p>
             <p>The main site serves a number of purposes, including:</p>
@@ -43,7 +44,7 @@
             </ul>
             <h4 id="workers">Service Workers</h4>
             <p>Service Workers are objects used to perform specific tasks for the server. Some workers may be contracted, meaning they alert other parts of the server when something happens.</p>
-            <table>
+            <table border="1px solid">
                 <caption>Information about all service workers on the back end</caption>
                 <tr>
                     <th scope="col">Worker</th>
@@ -98,7 +99,7 @@
             <p>DatabaseOperator is used to manage the <em>User Database</em> connection context (called UserDbContext in the source code). With the exception of the initializer (which takes the service provider for the server as input), all methods in the DatabaseOperator take the UserDbContext as input with the information needed to perform the action.</p>
             <h4 id="db-model">Database Model</h4>
             <p>The User Database is made up of 6 tables. Each table has a Model declared on the server and stored as a set of each model in the context object. The tables are as follows:</p>
-            <table>
+            <table border="1px solid">
                 <caption>Information about all tables on the User Database</caption>
                 <tr>
                     <th scope="col">Table name</th>
@@ -143,7 +144,7 @@
                     <td>SELECT</td>
                 </tr>
             </table>
-            <p>The DatabaseOperator-provided functions are all SQL functions that have equivalents in the DatabaseOperator. INSERT means the server can add to the table, UPDATE means it can change records, SELECT means it can read from the table, and DELETE means it can delete records. Tables with only SELECT can only be modified by connecting to the SQL database directly.</p>
+            <p>The DatabaseOperator-provided functions are all SQL functions that have equivalents in the DatabaseOperator. INSERT means the server can add to the table, UPDATE means it can change records, SELECT means it can read from the table, and DELETE means it can delete records. Tables with only SELECT can only be modified by connecting to the SQL database directly. Foreign keys are used to link records between tables.</p>
             <h4 id="process">Database Request Processing</h4>
             <p>Whenever a request is needed, the server follows different sets of instructions depending on the request. Here are the main request processing procedures.</p>
             <ul>
