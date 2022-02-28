@@ -1,3 +1,60 @@
+/* ---------------Box Sizing----------------- */
+
 html {
-    background-color: cornflowerblue;
+    box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+/* ----------------Global Styles------------- */
+
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0px;
+}
+
+header.primary {
+    background: #2D8BF5;
+    text-align: center;
+    padding: 7px 10px;
+}
+
+header.primary h1 {
+    font-size: 2.6rem;
+    margin: 20px 0;
+}
+
+header.primary h1 a {
+    color: inherit;
+    text-decoration: none;
+}
+
+header.primary h2 {
+    font-size: 1.4rem;
+    margin: 20px auto 40px;
+}
+
+header.primary nav {
+
+}
+
+header.primary nav ul {
+    padding: 0;
+}
+
+header.primary nav ul li {
+    list-style-type: none;
+}
+
+header.primary nav ul li a {
+    color: #FFFFFF;
+    text-decoration: none;
+    background-color: #000000;
+    padding: 8px 16px;
+    margin-bottom: 1rem;
+    display: inline-block;
 }
