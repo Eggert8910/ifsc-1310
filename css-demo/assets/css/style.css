@@ -10,6 +10,13 @@ html {
     box-sizing: inherit;
 }
 
+/* ----------------Utility Classes----------- */
+
+.container {
+    width: 70vw;
+    margin: 40px auto;
+}
+
 /* ----------------Global Styles------------- */
 
 body {
@@ -39,11 +46,16 @@ header.primary h2 {
 }
 
 header.primary nav {
-
+    width: 80vw;
+    margin: 0 auto;
+    max-width: 900px;
 }
 
 header.primary nav ul {
     padding: 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
 }
 
 header.primary nav ul li {
@@ -53,8 +65,30 @@ header.primary nav ul li {
 header.primary nav ul li a {
     color: #FFFFFF;
     text-decoration: none;
-    background-color: #000000;
+    background-color: #00000060;
     padding: 8px 16px;
-    margin-bottom: 1rem;
     display: inline-block;
+    border-radius: 20px;
+    transition: 0.3s;
+}
+
+header.primary nav a:hover {
+    background-color: rgba(0, 0, 0, 8);
+}
+
+section#intro {
+    padding-bottom: 1.1rem;
+    border-bottom: 1px dotted #C0C0C0;
+    
+}
+
+#intro h2 {
+    color: #4438F5;
+    border-bottom: 1px solid #c0c0c0;
+}
+
+@media screen and (max-width:600px) {
+    header.primary nav ul {
+        flex-direction: column;
+    }
 }
