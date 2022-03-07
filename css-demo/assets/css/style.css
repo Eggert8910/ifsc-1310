@@ -17,6 +17,10 @@ html {
     margin: 40px auto;
 }
 
+img {
+    max-width: 100%;
+}
+
 /* ----------------Global Styles------------- */
 
 body {
@@ -85,6 +89,89 @@ section#intro {
 #intro h2 {
     color: #4438F5;
     border-bottom: 1px solid #c0c0c0;
+}
+
+#content {
+    display: flex;
+    flex-direction: row;
+    justify-content:space-between;
+
+}
+
+#content article.post {
+    width: 30%;
+    box-shadow: 0px 4px 8px #c0c0c0;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    transition: 0.3s;
+}
+
+#content article.post:hover {
+    box-shadow: 0 4px 16px #c0c0c0;
+}
+
+time.post-date {
+    text-transform: uppercase;
+    color: #c0c0c0;
+}
+
+.post figure {
+    margin: 0;
+}
+.post img {
+    border: 1px solid #c0c0c0;
+    padding: 2px;
+    margin: 5px 0;
+}
+
+.post a {
+    color: #3b738b;
+}
+
+.post a:hover, .post a:active {
+    text-decoration: none;
+}
+
+
+aside[role="complementary"] {
+    background-color: #172635;
+    color: #ffffff;
+    padding: 1.8rem;
+}
+
+aside div.container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+aside div.container article.widget {
+    width: 42%;
+}
+
+article.widget a {
+    color: white;
+    display: block;
+    margin-top: 1.2rem;
+    text-align: right;
+}
+
+article.widget footer {
+    display: none;
+}
+
+#colophon {
+    background-color: #3b438b;
+}
+
+#colophon h6 {
+    padding: 20px;
+    margin: 0;
+    text-align: center;
+    color: #fff;
+    font-size: 0.6rem;
+    text-transform: uppercase;
 }
 
 @media screen and (max-width:600px) {
