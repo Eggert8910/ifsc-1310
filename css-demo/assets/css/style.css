@@ -45,6 +45,8 @@ img {
 body {
     font-family: 'Roboto', sans-serif;
     margin: 0px;
+    background: url("../img/rainy-day.jpg") no-repeat;
+    background-attachment: fixed;
 }
 
 header.primary {
